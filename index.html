@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Quiz App</title>
+    <style>
+        /* CSS: for design */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        /* boxes of flashcard*/
+        .card-container {
+            background-color: white;
+            width: 350px;
+            height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .card-content {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .answer-text {
+            color: #2ecc71;
+            display: none; /* in starting ans is hidden*/
+            margin-top: 10px;
+        }
+
+        /* button style */
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .delete-btn { background-color: #e74c3c; }
+        .delete-btn:hover { background-color: #c0392b; }
+        .edit-btn { background-color: #f39c12; }
+        .edit-btn:hover { background-color: #d35400; }
+
+        /* for adding card */
+        .form-container, .list-container {
+            background-color: white;
+            width: 350px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .flashcard-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⚡ Flashcard Quiz App</h1>
+
+    <!-- task1: main card -->
+    <div class="card-container">
+        <div id="card-question" class="card-content">Question see here</div>
+        <button onclick="toggleAnswer()">Show/Hide Answer</button>
+        <div id="card-answer" class="answer-text">Answer see here</div>
+    </div>
+
+    <!-- navigation button(Next & Previous) -->
+    <div>
+        <button onclick="prevCard()">◀ Previous</button>
+        <button onclick="nextCard()">Next ▶</button>
+    </div>
+
+    <!-- add new flashcard in main -->
+    <div class="form-container">
+        <h2 id="form-title">Add new card</h2>
+        <input type="text" id="input-question" placeholder="Type question">
+        <textarea id="input-answer" placeholder="Type answer"></textarea>
+        <button onclick="saveCard()" id="save-btn">Add Card</button>
+    </div>
+
+    <!-- saved card list ,where edit &delete -->
+    <div class="list-container">
+        <h2>All flashcard list</h2>
+        <div id="flashcards-list"></div>
+    </div>
+
+    <script>
+        // JavaScript: logic of app
+        
+        // 1. starting data
+        let flashcards = [
+            { question: "What is the Capital of India?", answer: "New Delhi" },
+            { question: "What is the full form of HTML?", answer: "HyperText Markup Language" },
+            { question: "What is the formula of water?", answer:"H2O"},
+            { question: "What is HTML use for? ", answer:"Frontend"}
+        ];
+
+        let currentIndex = 0; // which one card is visible on screen
+        let editIndex = -1;   // which card is edited(-1 means no)
+
+        // 2. function to display cards on the screen
+        function displayCard() {
+            const questionElement = document.getElementById('card-question');
+            const answerElement = document.getElementById('card-answer');
+
+            if (flashcards.length > 0) {
+                // if list has card, so show the present card
+                questionElement.innerText = flashcards[currentIndex].question;
+                answerElement.innerText = flashcards[currentIndex].answer;
+            } else {
+                // if all card are deleted
+                questionElement.innerText = "no more cards,add new one!";
+                answerElement.innerText = "";
+            }
+            // keep the answer hidden each time a new card appears.
+            answerElement.style.display = "none"; 
+        }
+
+        // 3. logic of Show Answer
+        function toggleAnswer() {
+            const answerElement = document.getElementById('card-answer');
+            if (flashcards.length === 0) return;
+            
+            if (answerElement.style.display === "none") {
+                answerElement.style.display = "block";
+            } else {
+                answerElement.style.display = "none";
+            }
+        }
+
+        // 4. logic of go to next card 
+        function nextCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex + 1) % flashcards.length; // आखिरी कार्ड के बाद वापस पहले पर आ जाएगा
+            displayCard();
+        }
+
+        // 5. logic of go to previous card
+        function prevCard() {
+            if (flashcards.length === 0) return;
+            currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+            displayCard();
+        }
+
+        // 6. logic of add and update the card
+        function saveCard() {
+            const qInput = document.getElementById('input-question').value.trim();
+            const aInput = document.getElementById('input-answer').value.trim();
+
+            if (qInput === "" || aInput === "") {
+                alert("fill the question and answer both");
+                return;
+            }
+
+            if (editIndex === -1) {
+                // edding the new card
+                flashcards.push({ question: qInput, answer: aInput });
+                currentIndex = flashcards.length - 1; // go directly to the newly added card
+            } else {
+                // editing and saving the old card
+                flashcards[editIndex] = { question: qInput, answer: aInput };
+                editIndex = -1; // off the edit mode
+                document.getElementById('form-title').innerText = "add new card";
+                document.getElementById('save-btn').innerText = "Add Card";
+            }
+
+            // empty the inbox
+            document.getElementById('input-question').value = "";
+            document.getElementById('input-answer').value = "";
+
+            displayCard();
+            updateManageList();
+        }
+
+        // 7. logic of Delete the card
+        function deleteCard(index) {
+            flashcards.splice(index, 1); // remove the card at the specified number from the list
+            
+            // adjust the index if it falls outside the current valid range
+            if (currentIndex >= flashcards.length) {
+                currentIndex = Math.max(0, flashcards.length - 1);
+            }
+            
+            displayCard();
+            updateManageList();
+        }
+
+        // 8. logic of to start the edit mode
+        function startEdit(index) {
+            editIndex = index;
+            // old data fill in the form
+            document.getElementById('input-question').value = flashcards[index].question;
+            document.getElementById('input-answer').value = flashcards[index].answer;
+            
+            // update the name so that user know it
+            document.getElementById('form-title').innerText = "कार्ड एडिट करें";
+            document.getElementById('save-btn').innerText = "Update Card";
+        }
+
+        
+        function updateManageList() {
+            const listContainer = document.getElementById('flashcards-list');
+            listContainer.innerHTML = ""; // clear the old list
+
+            flashcards.forEach((card, index) => {
+                const item = document.createElement('div');
+                item.className = 'flashcard-list-item';
+                item.innerHTML = `
+                    <span>Q: ${card.question.substring(0, 20)}...</span>
+                    <div>
+                        <button class="edit-btn" onclick="startEdit(${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteCard(${index})">Delete</button>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // do this first as soon as the app loads
+        displayCard();
+        updateManageList();
+    </script>
+</body>
+</html>
